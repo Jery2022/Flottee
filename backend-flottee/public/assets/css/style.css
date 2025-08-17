@@ -1,0 +1,39 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+:root {
+    --bg: #ffffff;
+    --text: #000000;
+}
+
+body.dark {
+    --bg: #121212;
+    --text: #f0f0f0;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: var(--bg);
+    border-bottom: 1px solid #ccc;
+}
+
+.nav-buttons button {
+    margin-left: 10px;
+}
+
+.login-container {
+    max-width: 350px;
+    margin: 100px auto;
+    padding: 2rem;
+    border: 1px solid #ccc;
+    background-color: var(--bg);
+    color: var(--text);
+}

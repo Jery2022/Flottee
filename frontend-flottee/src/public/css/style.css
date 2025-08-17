@@ -1,0 +1,31 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+h2 {
+    color: #007bff;
+    margin-bottom: 20px;
+}
+
+form {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+table {
+    background-color: #ffffff;
+}
+
+table th, table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.navbar {
+    margin-bottom: 20px;
+}

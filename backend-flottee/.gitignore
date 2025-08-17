@@ -1,0 +1,8 @@
+node_modules/
+vendor/
+poubelle/
+.git/
+.env.prod
+.env
+.DS_Store
+* copy.php

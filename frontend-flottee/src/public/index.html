@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Accueil - Gestion de Flotte</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f8;
+    }
+
+    header {
+      background: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #e9ecef;
+      padding: 10px;
+    }
+
+    nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .main {
+      padding: 40px;
+      text-align: center;
+    }
+
+    .auth-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .auth-button.logout {
+      background: #dc3545;
+    }
+
+    .auth-button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🚘 Bienvenue sur la plateforme de gestion de véhicules</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="reservation.html">Réserver un véhicule</a>
+    <a href="dashboard.html">Voir les véhicules par statut</a>
+  </nav>
+
+
+  <div class="main">
+    <p>Utilisez le menu ci-dessus pour naviguer dans l'application.</p>
+    <button id="authBtn" class="auth-button">Connexion</button>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('jwt_token');
+    const authBtn = document.getElementById('authBtn');
+
+    if (token) {
+      authBtn.textContent = "Déconnexion";
+      authBtn.classList.add("logout");
+      authBtn.onclick = () => {
+        localStorage.removeItem('jwt_token');
+        alert("Déconnecté avec succès.");
+        location.reload();
+      };
+    } else {
+      authBtn.textContent = "Connexion";
+      authBtn.onclick = () => {
+        window.location.href = "login.html";
+      };
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Réservation de véhicule</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      padding: 40px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+
+    form {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📅 Réserver un véhicule</h1>
+
+  <form id="reservationForm">
+    <label for="vehicle_id">ID du véhicule</label>
+    <input type="text" id="vehicle_id" name="vehicle_id" required>
+
+    <label for="start_date">Date de début</label>
+    <input type="date" id="start_date" name="start_date" required>
+
+    <label for="end_date">Date de fin</label>
+    <input type="date" id="end_date" name="end_date" required>
+
+    <button type="submit">Réserver</button>
+  </form>
+
+  <script>
+    const token = localStorage.getItem('jwt_token');
+
+    if (!token) {
+      alert("Vous devez être connecté pour réserver un véhicule.");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("reservationForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const formData = {
+        vehicle_id: document.getElementById("vehicle_id").value,
+        start_date: document.getElementById("start_date").value,
+        end_date: document.getElementById("end_date").value
+      };
+
+      try {
+        const response = await fetch("http://localhost/api/routes/reservations.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert("Réservation effectuée avec succès !");
+          document.getElementById("reservationForm").reset();
+        } else {
+          alert("Erreur : " + result.message);
+        }
+      } catch (error) {
+        alert("Erreur de connexion au serveur.");
+      }
+    });
+  </script>
+
+</body>
+</html>
