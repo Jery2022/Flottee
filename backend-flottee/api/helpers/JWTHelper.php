@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Exception;
+use App\Helpers\EnvLoader;
 
 class JWTHelper
 {
@@ -15,10 +16,14 @@ class JWTHelper
 
     public function __construct()
     {
-        $this->secretKey = $_ENV['JWT_SECRET_KEY'] ?? getenv('JWT_SECRET_KEY');
+        $this->secretKey = EnvLoader::getJwtSecretKey(); //getenv('JWT_SECRET_KEY');
         $this->issuer = $_ENV['JWT_ISSUER'] ?? 'http://localhost:8000/backend/api/';
         $this->audience = $_ENV['JWT_AUDIENCE'] ?? 'http://localhost:3000';
         $this->expiration = 60 * 60 * 24;
+
+        if (empty($this->secretKey)) {
+            throw new Exception('La clé secrète JWT est absente ou invalide.');
+        }
     }
 
     public function generateJWT(array $data): string
@@ -48,26 +53,26 @@ class JWTHelper
     public static function validateJWT(string $token): ?object
     {
         try {
-            return JWT::decode($token, new Key(self::$secretKey, 'HS256'));
+            $jwtHelper = new self();
+            return JWT::decode($token, new Key($jwtHelper->secretKey, 'HS256'));
         } catch (Exception $e) {
+            error_log('JWT validation error: ' . $e->getMessage());
             return null;
         }
     }
-    
-    /**
-     * Récupère les données de l'utilisateur à partir du JWT
-     * @return array|null
-     */
+
     public static function getUserDataFromJWT(): ?array
     {
         $headers = getallheaders();
         $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+
         if (!$authHeader) {
             error_log('Authorization header absent');
             return null;
         }
 
         $token = str_replace('Bearer ', '', $authHeader);
+
         try {
             $jwtHelper = new self();
             $decoded = $jwtHelper->decodeJWT($token);

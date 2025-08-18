@@ -10,7 +10,7 @@ $requestUri = $_SERVER['REQUEST_URI'];
 $isApiRoute = str_starts_with($requestUri, '/api/');
 
 if ($isApiRoute) {
-    
+
     //Pour accepter plusieurs origines
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $allowed = ['http://localhost:3000', 'http://localhost:8000'];
@@ -32,9 +32,10 @@ $router = new Router();
 
 $router->add('GET', '/', 'AccueilController@index'); // Affiche la page d'accueil, OK
 $router->add('GET', '/api/routes/test', 'TestController@status'); // Affiche la page de test, OK
+$router->add('GET', '/api/debug/jwt', 'jwtController@handle'); // Affiche la page de test du jwt, OK
 $router->add('GET', '/login', 'AdminController@show'); // Affiche la page de login, OK
 
-$router->group('/api/routes', function($r) {
+$router->group('/api/routes', function ($r) {
     $r->resource('/users', 'UsersController'); // CRUD pour les utilisateurs
     $r->resource('/vehicles', 'VehiclesController'); // CRUD pour les véhicules
     $r->resource('/articles', 'ArticleController'); // CRUD pour les articles(informations, notes, notifications)
@@ -46,10 +47,9 @@ $router->group('/api/routes', function($r) {
     $r->add('POST', '/vehicles/{id}/reserve', 'VehiclesController@reserve');
     $r->add('GET', '/articles/{slug}', 'ArticleController@read');
     $r->add('GET', '/csrf-token', 'AuthController@getCsrfToken');
-
 });
 
-$router->group('/api/routes', function($r) {
+$router->group('/api/routes', function ($r) {
     $r->add('POST', '/auth', 'AuthController@login');
     $r->add('POST', '/auth/handleForm', 'AuthController@handleForm'); // Gère le formulaire de connexion
     $r->add('POST', '/auth/logout', 'AuthController@logout');
@@ -64,7 +64,7 @@ $router->group('/api/routes', function($r) {
     $r->add('GET', '/vehicles', 'VehiclesController@show');
 });
 
-$router->group('/admin', function($r) {
+$router->group('/admin', function ($r) {
     $r->add('GET', '/dashboard', 'DashboardController@index');
 });
 

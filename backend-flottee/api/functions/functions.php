@@ -1,6 +1,6 @@
 <?php 
 
-require_once '/../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -49,6 +49,13 @@ function authMiddleware($requiredRole = null) {
 
     try {
         $secretKey = $_ENV['JWT_SECRET_KEY'] ?: getenv('JWT_SECRET_KEY');
+
+        // LOG Vérifie si la clé secrète est définie et valide
+        if (!is_string($secretKey) || empty($secretKey)) {
+        throw new \Exception('JWT secret key is missing or invalid');
+        }
+
+        // Décode le JWT
         $decoded = JWT::decode($jwt, new Key($secretKey, 'HS256'));
 
         // Vérifie l'expiration

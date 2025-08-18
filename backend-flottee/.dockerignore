@@ -1,8 +1,22 @@
 node_modules
 vendor
+notes_de_projet
+logs
 .git
 .gitignore
 .env
+.env.prod
+.env.local
 *.log
 *.bak
 *.tmp
+poubelle
+tests
+generate_token.php
+jwt_diagnostic.php
+hash_pwd.php
+start-app.bat
+logs/*.log
+.git/
+.DS_Store
+* copy.php

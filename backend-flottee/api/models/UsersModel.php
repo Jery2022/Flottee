@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use PDO;
@@ -14,18 +15,6 @@ class UsersModel
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    public function getAll(): array
-    {
-        $stmt = $this->pdo->query("SELECT * FROM users");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getById(int $id): ?array
-    {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
 
     public function getByEmail(string $email): ?array
     {
@@ -81,9 +70,20 @@ class UsersModel
 
     public function delete(int $id): bool
     {
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
+        $stmt = $this->pdo->prepare("UPDATE users SET deleted_at = NOW() WHERE id = ?");
         return $stmt->execute([$id]);
     }
 
+    public function getAll(): array
+    {
+        $stmt = $this->pdo->query("SELECT * FROM users WHERE deleted_at IS NULL");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
+    public function getById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ? AND deleted_at IS NULL");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
 }
