@@ -68,7 +68,7 @@ Pour des raisons de sécurité, les informations sensibles comme les clés secr�
 
 Commande à taper :
 
-heroku config:set JWT_SECRET_KEY="ChangezMoiAvecUnePhraseVraimentTresLongueEtSecurisee123!" _(exemple de texte)_
+heroku config:set JWT*SECRET_KEY="ChangezMoiAvecUnePhraseVraimentTresLongueEtSecurisee123!" *(exemple de texte)\_
 
 Résultat attendu : Un message confirmant que la variable a été ajoutée à la configuration de l'application.
 
