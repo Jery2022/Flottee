@@ -1,0 +1,29 @@
+# heroku.yml
+# Ce fichier décrit comment construire et déployer l'application sur Heroku.
+
+setup:
+  # Heroku propose des "add-ons" pour les services comme les bases de données.
+  # Nous allons ajouter la base de données via la ligne de commande,
+  # mais cette section pourrait être utilisée pour le déclarer.
+  addons:
+    - plan: cleardb:ignite
+      as: DATABASE
+
+build:
+  # Nous indiquons à Heroku d'utiliser Docker pour construire notre application.
+  docker:
+    # 'web' est le nom standard pour un processus qui reçoit du trafic HTTP.
+    web: backend-flottee/Dockerfile
+
+# La section 'release' définit une commande qui est exécutée une seule fois
+# lors de la création d'une nouvelle version de l'application (après la construction).
+# C'est l'endroit idéal pour les migrations de base de données.
+# Pour l'instant, nous n'en avons pas besoin, mais c'est bon à savoir.
+# release:
+#   command:
+#     - php /app/bin/migrate.php
+#   image: web
+
+run:
+  # Cette section définit la commande pour lancer notre application.
+  web: apache2-foreground

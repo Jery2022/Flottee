@@ -31,15 +31,32 @@ function env(string $key, mixed $default = null): mixed
  */
 function getPDO(): PDO
 {
-    $dbHost    = env('DB_HOST');
-    $dbName    = env('DB_NAME');
-    $dbUser    = env('DB_USER');
-    $dbPass    = env('DB_PASS');
-    $dbCharset = env('DB_CHARSET') ?: 'utf8mb4'; // Définit utf8mb4 par défaut si non spécifié
+    // Logique de connexion unifiée pour Heroku et local
+    $dbUrl = env('DATABASE_URL'); // Heroku injecte cette variable
+
+    if ($dbUrl) {
+        // Mode Heroku : parser l'URL de la base de données
+        error_log("[DB] Variable DATABASE_URL détectée, tentative de connexion mode Heroku.");
+        $dbConfig = parse_url($dbUrl);
+
+        $dbHost = $dbConfig['host'];
+        $dbName = ltrim($dbConfig['path'], '/');
+        $dbUser = $dbConfig['user'];
+        $dbPass = $dbConfig['pass'];
+    } else {
+        // Mode Local : utiliser les variables d'environnement individuelles
+        error_log("[DB] Pas de DATABASE_URL, tentative de connexion mode local.");
+        $dbHost = env('DB_HOST');
+        $dbName = env('DB_NAME');
+        $dbUser = env('DB_USER');
+        $dbPass = env('DB_PASS');
+    }
+
+    $dbCharset = env('DB_CHARSET') ?: 'utf8mb4';
 
     // Vérification cruciale que les paramètres essentiels sont définis.
     if (! $dbHost || ! $dbName || ! $dbUser) {
-        error_log("[DB] ERREUR CRITIQUE: Paramètres de connexion à la base de données manquants. Vérifiez DB_HOST, DB_NAME, DB_USER dans votre fichier .env.");
+        error_log("[DB] ERREUR CRITIQUE: Paramètres de connexion à la base de données manquants.");
         throw new RuntimeException("Paramètres de connexion à la base de données manquants. Vérifiez votre configuration.");
     }
 

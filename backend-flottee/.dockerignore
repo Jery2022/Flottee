@@ -19,4 +19,4 @@ start-app.bat
 logs/*.log
 .git/
 .DS_Store
-* copy.php
+*copy.php

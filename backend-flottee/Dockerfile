@@ -1,17 +1,48 @@
-# Utilise une image PHP avec Apache
-FROM php:8.5.0alpha4-cli-alpine3.21
+# Utiliser une image PHP officielle avec Apache
+FROM php:8.2-apache
 
-# Copie les fichiers de l'application
-COPY . /var/www/html/
+# Définir le répertoire de travail dans le conteneur
+WORKDIR /var/www/html
 
-# Active le module rewrite d'Apache
+# Installer les dépendances système nécessaires pour les extensions PHP
+# et pour Composer.
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer les extensions PHP requises par votre application
+RUN docker-php-ext-install pdo pdo_mysql zip
+
+# Installer Composer (le gestionnaire de dépendances pour PHP)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copier les fichiers de définition des dépendances
+COPY composer.json composer.lock ./
+
+# Installer les dépendances du projet avec Composer
+# --no-interaction: Ne pose pas de questions interactives
+# --optimize-autoloader: Optimise l'autoloader pour la production
+RUN composer install --no-interaction --optimize-autoloader
+
+# Copier le reste des fichiers de l'application
+COPY . .
+
+# Copier le fichier d'environnement de développement en tant que .env
+COPY .env.local .env
+
+# Activer le module de réécriture d'URL d'Apache pour les "jolies" URL (pretty URLs)
 RUN a2enmod rewrite
 
-# Installe les extensions PHP nécessaires (ex: PDO, mbstring)
-RUN docker-php-ext-install pdo pdo_mysql mbstring
+# Changer le propriétaire des fichiers pour l'utilisateur Apache
+# afin d'éviter les problèmes de permissions
+RUN chown -R www-data:www-data /var/www/html
 
-# Copie le fichier .env dans le conteneur
-COPY .env /var/www/html/.env
+# Le DocumentRoot d'Apache est déjà /var/www/html, mais votre application
+# semble utiliser /var/www/html/public. Nous allons ajuster la configuration d'Apache.
+# Pour simplifier, nous allons laisser le WORKDIR sur /var/www/html et
+# Apache pointera vers le dossier public via la configuration.
+# Une meilleure approche serait d'avoir un virtual host, mais pour commencer,
+# le .htaccess dans le dossier public devrait suffire si bien configuré.
 
-# Définit le dossier public comme racine du serveur
-WORKDIR /var/www/html/public
+# Le port 80 est déjà exposé par l'image de base php:8.2-apache

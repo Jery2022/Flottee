@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS ejyr_flottee_prod;
+CREATE DATABASE IF NOT EXISTS flottee_vehicles;
 
-USE ejyr_flottee_prod;
+USE flottee_vehicles;
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     vehicle_id INT NOT NULL,
+    description TEXT NOT NULL DEFAULT 'A renseigner',
     start_date DATE NOT NULL,
     end_date DATE,
     status ENUM('active', 'completed', 'cancelled') DEFAULT 'active',
@@ -65,16 +66,17 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 INSERT INTO users (first_name, last_name, pseudo, email, password, role, status, last_login)
 VALUES
-('Alice', 'Ngoma', 'alice01', 'alice@example.com', 'hashed_pwd_1', 'admin', 'active', '2025-08-01 10:00:00'),
-('Bruno', 'Mouele', 'bruno02', 'bruno@example.com', 'hashed_pwd_2', 'user', 'active', '2025-08-02 09:30:00'),
-('Chantal', 'Obiang', 'chantal03', 'chantal@example.com', 'hashed_pwd_3', 'user', 'inactive', NULL),
-('David', 'Essono', 'david04', 'david@example.com', 'hashed_pwd_4', 'user', 'active', '2025-08-03 11:15:00'),
-('Esther', 'Mba', 'esther05', 'esther@example.com', 'hashed_pwd_5', 'admin', 'active', '2025-08-04 08:45:00'),
-('Fabrice', 'Ndong', 'fabrice06', 'fabrice@example.com', 'hashed_pwd_6', 'user', 'active', '2025-08-05 14:20:00'),
-('Grace', 'Boussamba', 'grace07', 'grace@example.com', 'hashed_pwd_7', 'user', 'inactive', NULL),
-('Henri', 'Makaya', 'henri08', 'henri@example.com', 'hashed_pwd_8', 'user', 'active', '2025-08-06 16:00:00'),
-('Ines', 'Koumba', 'ines09', 'ines@example.com', 'hashed_pwd_9', 'user', 'active', '2025-08-07 12:10:00'),
-('Jean', 'Minko', 'jean10', 'jean@example.com', 'hashed_pwd_10', 'admin', 'active', '2025-08-08 07:50:00');
+('Admin', 'Paulin', 'admin01', 'admin@example.com', '$2y$10$JlzLZ1zAW0.MXej4nUljPO4Qq3CVQq5fgWQG.f4FCbKRwS5g4vFWq', 'admin', 'active', '2025-06-01 14:00:00'),
+('Alice', 'Ngoma', 'alice01', 'alice@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'admin', 'active', '2025-08-01 10:00:00'),
+('Bruno', 'Mouele', 'bruno02', 'bruno@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'active', '2025-08-02 09:30:00'),
+('Chantal', 'Obiang', 'chantal03', 'chantal@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'inactive', NULL),
+('David', 'Essono', 'david04', 'david@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'active', '2025-08-03 11:15:00'),
+('Esther', 'Mba', 'esther05', 'esther@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'admin', 'active', '2025-08-04 08:45:00'),
+('Fabrice', 'Ndong', 'fabrice06', 'fabrice@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'active', '2025-08-05 14:20:00'),
+('Grace', 'Boussamba', 'grace07', 'grace@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'inactive', NULL),
+('Henri', 'Makaya', 'henri08', 'henri@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'active', '2025-08-06 16:00:00'),
+('Ines', 'Koumba', 'ines09', 'ines@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'user', 'active', '2025-08-07 12:10:00'),
+('Jean', 'Minko', 'jean10', 'jean@example.com', '$2y$10$Nc1SlPoT6PBaIpwYkDsPUe.o5rq/WGchinYbpJt8HR7f2RxnOJTv2', 'admin', 'active', '2025-08-08 07:50:00');
 
 
 -- jeu de données d'exemple pour la table vehicles
