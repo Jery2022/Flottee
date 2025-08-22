@@ -16,8 +16,8 @@ services:
       - DB_HOST=db
       - DB_PORT=3306
       - DB_NAME=flottee_vehicles
-      - DB_USER=root
-      - DB_PASS=
+      - DB_USER=user
+      - DB_PASS=${DB_PASSWORD}
     depends_on:
       - db
 
@@ -27,8 +27,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: flottee_vehicles
-      MYSQL_ROOT_PASSWORD: 
-      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_USER: user
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     volumes:

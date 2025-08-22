@@ -28,9 +28,6 @@ RUN composer install --no-interaction --optimize-autoloader
 # Copier le reste des fichiers de l'application
 COPY . .
 
-# Copier le fichier d'environnement de développement en tant que .env
-COPY .env.local .env
-
 # Activer le module de réécriture d'URL d'Apache pour les "jolies" URL (pretty URLs)
 RUN a2enmod rewrite
 

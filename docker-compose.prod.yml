@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  app:
+    volumes: []
+    # En production, le code est déjà dans l'image.
+    # La directive "volumes: []" ci-dessus annule le montage du volume
+    # "./backend-flottee:/var/www/html" défini dans le fichier docker-compose.yml.
+    # Cela garantit que le conteneur est immuable et utilise uniquement le code
+    # qui a été copié dans l'image lors du build.
