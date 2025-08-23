@@ -5,9 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Administrateur - Flottee</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome pour les icônes -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
@@ -76,22 +74,6 @@
     .bg-c-pink {
       background: linear-gradient(45deg, #FF5370, #ff869a);
     }
-
-    .bg-c-purple {
-      background: linear-gradient(45deg, #6A1B9A, #9C27B0);
-    }
-
-    .bg-c-teal {
-      background: linear-gradient(45deg, #009688, #4DB6AC);
-    }
-
-    .bg-c-orange {
-      background: linear-gradient(45deg, #FF9800, #FFB74D);
-    }
-
-    .bg-c-red {
-      background: linear-gradient(45deg, #F44336, #E57373);
-    }
   </style>
 </head>
 
@@ -111,46 +93,43 @@
     <div class="container-fluid">
       <h1 class="mb-4">Dashboard</h1>
       <div id="stats-container" class="row">
-        <!-- Les cartes de statistiques seront injectées ici par JavaScript -->
         <div class="col-12 text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Chargement...</span>
-          </div>
+          <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
         </div>
       </div>
 
       <div class="row mt-5">
-        <div class="col-md-12">
+        <div class="col-lg-12 mb-4">
           <div class="card">
-            <div class="card-header">
-              Coût total de maintenance par véhicule
-            </div>
+            <div class="card-header"><i class="fas fa-dollar-sign me-2"></i>Top 5 - Coûts de Maintenance</div>
             <div class="card-body">
               <table class="table table-striped">
                 <thead>
                   <tr>
                     <th>Véhicule</th>
-                    <th>Plaque</th>
                     <th>Coût Total</th>
                   </tr>
                 </thead>
-                <tbody id="maintenance-cost-table">
-                  <!-- Données injectées par JS -->
-                </tbody>
+                <tbody id="maintenance-cost-table"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+        <div class="col-lg-12 mb-4">
+          <div class="card">
+            <div class="card-header"><i class="fas fa-chart-bar me-2"></i>Top 5 Utilisation (en jours)</div>
+            <div class="card-body"><canvas id="usageChart" style="max-height: 400px;"></canvas></div>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const token = localStorage.getItem('jwt');
-
       if (!token) {
         window.location.href = '/login.php';
         return;
@@ -167,28 +146,24 @@
           if (response.status === 401 || response.status === 403) {
             localStorage.removeItem('jwt');
             window.location.href = '/login.php';
-            return;
-          }
-          if (!response.ok) {
-            throw new Error('Erreur réseau ou serveur');
+            return Promise.reject('Session invalide');
           }
           return response.json();
         })
         .then(data => {
           if (data && data.stats) {
             displayStats(data.stats);
+            createUsageChart(data.stats.top_used_vehicles, data.stats.top_users);
           }
         })
         .catch(error => {
-          console.error('Erreur lors de la récupération des statistiques:', error);
-          const container = document.getElementById('stats-container');
-          container.innerHTML = `<div class="alert alert-danger">Erreur lors du chargement des données.</div>`;
+          console.error('Erreur:', error);
+          document.getElementById('stats-container').innerHTML = `<div class="alert alert-danger">Erreur lors du chargement des données.</div>`;
         });
 
       function displayStats(stats) {
         const container = document.getElementById('stats-container');
-        container.innerHTML = ''; // Vider le spinner
-
+        container.innerHTML = '';
         const statsMap = [{
             title: 'Utilisateurs Actifs',
             value: stats.active_user_count,
@@ -202,7 +177,7 @@
             color: 'bg-c-green'
           },
           {
-            title: 'Véhicules en Maintenance',
+            title: 'En Maintenance',
             value: stats.vehicles_in_maintenance_count,
             icon: 'fa-tools',
             color: 'bg-c-yellow'
@@ -214,44 +189,87 @@
             color: 'bg-c-pink'
           }
         ];
-
         statsMap.forEach(stat => {
-          const cardHtml = `
-                        <div class="col-md-6 col-xl-3 mb-4">
-                            <div class="card stat-card ${stat.color}">
-                                <div class="card-body">
-                                    <div>
-                                        <h4 class="mb-0">${stat.value}</h4>
-                                        <span>${stat.title}</span>
-                                    </div>
-                                    <i class="fas ${stat.icon}"></i>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-          container.innerHTML += cardHtml;
+          container.innerHTML += `<div class="col-md-6 col-xl-3 mb-4"><div class="card stat-card ${stat.color}"><div class="card-body"><div><h4 class="mb-0">${stat.value}</h4><span>${stat.title}</span></div><i class="fas ${stat.icon}"></i></div></div></div>`;
         });
 
-        // Remplir le tableau des coûts de maintenance
         const tableBody = document.getElementById('maintenance-cost-table');
         let tableHtml = '';
         if (stats.total_maintenance_cost_per_vehicle.length > 0) {
           stats.total_maintenance_cost_per_vehicle.forEach(item => {
-            tableHtml += `
-                            <tr>
-                                <td>${item.make} ${item.model}</td>
-                                <td>${item.license_plate}</td>
-                                <td>${parseFloat(item.total_cost).toFixed(2)} €</td>
-                            </tr>
-                        `;
+            tableHtml += `<tr><td>${item.make} ${item.model} (${item.license_plate})</td><td>${parseFloat(item.total_cost).toFixed(2)} €</td></tr>`;
           });
         } else {
-          tableHtml = '<tr><td colspan="3" class="text-center">Aucune donnée de maintenance disponible.</td></tr>';
+          tableHtml = '<tr><td colspan="2" class="text-center">Aucune donnée.</td></tr>';
         }
         tableBody.innerHTML = tableHtml;
       }
 
-      // Gestion de la déconnexion
+      function createUsageChart(topVehicles, topUsers) {
+        const ctx = document.getElementById('usageChart').getContext('2d');
+
+        const vehicleLabels = topVehicles.map(v => `${v.make} ${v.model}`);
+        const vehicleData = topVehicles.map(v => v.total_usage_days);
+
+        const userLabels = topUsers.map(u => `${u.first_name} ${u.last_name}`);
+        const userData = topUsers.map(u => u.total_usage_days);
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Top 1', 'Top 2', 'Top 3', 'Top 4', 'Top 5'],
+            datasets: [{
+                label: 'Top Véhicules (en jours d\'utilisation)',
+                data: vehicleData,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                tooltips: {
+                  labels: vehicleLabels
+                }
+              },
+              {
+                label: 'Top Utilisateurs (en jours d\'utilisation)',
+                data: userData,
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                tooltips: {
+                  labels: userLabels
+                }
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    const originalLabels = context.dataset.tooltips.labels;
+                    if (context.dataIndex < originalLabels.length) {
+                      label += originalLabels[context.dataIndex];
+                    }
+                    label += ` (${context.parsed.y} jours)`;
+                    return label;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
       document.getElementById('logout-btn').addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.removeItem('jwt');

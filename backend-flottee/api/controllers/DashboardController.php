@@ -28,6 +28,8 @@ class DashboardController
                 'average_assignment_duration' => $statsModel->getAverageAssignmentDuration(),
                 'vehicles_in_maintenance_count' => $statsModel->getVehiclesInMaintenanceCount(),
                 'upcoming_maintenance_alerts' => $statsModel->getUpcomingMaintenanceAlerts(),
+                'top_used_vehicles' => $statsModel->getTopUsedVehicles(),
+                'top_users' => $statsModel->getTopUsers(),
             ];
 
             // Renvoyer une réponse de succès avec les statistiques

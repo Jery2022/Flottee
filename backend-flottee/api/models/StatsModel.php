@@ -69,6 +69,7 @@ class StatsModel
             JOIN vehicles v ON mr.vehicle_id = v.id
             GROUP BY mr.vehicle_id
             ORDER BY total_cost DESC
+            LIMIT 5
         ");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -105,5 +106,43 @@ class StatsModel
     {
         // Ne peut pas être implémenté avec le schéma actuel.
         return [];
+    }
+
+    /**
+     * Top 5 des véhicules les plus utilisés (basé sur le nombre d'affectations).
+     */
+    public function getTopUsedVehicles(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT 
+                v.make, v.model, v.license_plate, 
+                SUM(DATEDIFF(IFNULL(a.end_date, CURDATE()), a.start_date)) as total_usage_days
+            FROM assignments a
+            JOIN vehicles v ON a.vehicle_id = v.id
+            WHERE a.status IN ('active', 'completed')
+            GROUP BY a.vehicle_id
+            ORDER BY total_usage_days DESC
+            LIMIT 5
+        ");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Top 5 des utilisateurs (basé sur le nombre d'affectations).
+     */
+    public function getTopUsers(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT 
+                u.first_name, u.last_name, 
+                SUM(DATEDIFF(IFNULL(a.end_date, CURDATE()), a.start_date)) as total_usage_days
+            FROM assignments a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.status IN ('active', 'completed')
+            GROUP BY a.user_id
+            ORDER BY total_usage_days DESC
+            LIMIT 5
+        ");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 }
