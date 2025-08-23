@@ -28,6 +28,9 @@ RUN composer install --no-interaction --optimize-autoloader
 # Copier le reste des fichiers de l'application
 COPY . .
 
+# Copier le fichier de configuration d'Apache personnalisé pour définir le DocumentRoot
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+
 # Activer le module de réécriture d'URL d'Apache pour les "jolies" URL (pretty URLs)
 RUN a2enmod rewrite
 

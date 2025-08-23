@@ -1,15 +1,7 @@
 RewriteEngine On
 
-# Autoriser l'accès direct aux fichiers existants
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Rediriger les routes API vers index.php
-RewriteRule ^api/(.*)$ index.php [QSA,L]
-
-# Rediriger les vues admin sans extension vers leur équivalent .php
-RewriteRule ^admin/([a-zA-Z0-9_-]+)$ admin/$1.php [L]
-
-# Fallback général
+# Si le fichier ou le répertoire demandé n'existe pas,
+# rediriger la requête vers index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]

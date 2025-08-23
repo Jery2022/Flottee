@@ -12,6 +12,10 @@ L'application permet :
 
 Ce projet est conçu pour être facilement déployé sur un serveur local (XAMPP) et peut être étendu pour inclure des fonctionnalités supplémentaires comme la gestion des entretiens, des affectations ou des statistiques de consommation.
 
+# Lancement de l'application serveur PHP interne
+
+php -S localhost:8000 -t backend-flottee\public
+
 ## Etape pour le déploiement de Flottee sur Horuku
 
 ### Étape 1 : Préparer votre code avec Git

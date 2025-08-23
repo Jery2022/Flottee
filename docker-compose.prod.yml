@@ -1,10 +1,20 @@
-version: '3.8'
-
 services:
   app:
-    volumes: []
-    # En production, le code est déjà dans l'image.
-    # La directive "volumes: []" ci-dessus annule le montage du volume
-    # "./backend-flottee:/var/www/html" défini dans le fichier docker-compose.yml.
-    # Cela garantit que le conteneur est immuable et utilise uniquement le code
-    # qui a été copié dans l'image lors du build.
+    build:
+      context: ./backend-flottee
+      dockerfile: Dockerfile
+    container_name: flottee-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend-flottee:/var/www/html
+    ports:
+      - "8000:80"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
