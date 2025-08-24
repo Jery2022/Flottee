@@ -14,7 +14,10 @@ class DashboardController
         \App\Helpers\AuthMiddleware::requireRole('admin');
 
         // Si nous arrivons ici, l'utilisateur est authentifié et est un admin.
-        $user = \App\Helpers\JWTHelper::getUserDataFromJWT();
+        $user_data = \App\Helpers\JWTHelper::getUserDataFromJWT();
+        $user = [
+            'first_name' => $user_data['first_name'] ?? 'Admin'
+        ];
 
         try {
             $statsModel = new StatsModel();

@@ -19,7 +19,7 @@ class StatsModel
      */
     public function getVehicleUtilizationRate(): float
     {
-        $stmt = $this->pdo->query("SELECT (COUNT(CASE WHEN status = 'en utilisation' THEN 1 END) * 100.0 / COUNT(*)) as rate FROM vehicles");
+        $stmt = $this->pdo->query("SELECT IF(COUNT(*) > 0, (COUNT(CASE WHEN status = 'en utilisation' THEN 1 END) * 100.0 / COUNT(*)), 0) as rate FROM vehicles");
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return round((float)($result['rate'] ?? 0), 2);
     }
@@ -50,9 +50,10 @@ class StatsModel
     public function getAverageMaintenanceFrequency(): float
     {
         $stmt = $this->pdo->query("
-            SELECT 
-                (SELECT COUNT(*) FROM maintenance_records) / 
-                (SELECT COUNT(*) FROM vehicles) as avg_freq
+            SELECT IF(v.total > 0, m.total / v.total, 0) as avg_freq
+            FROM 
+                (SELECT COUNT(*) as total FROM maintenance_records) as m,
+                (SELECT COUNT(*) as total FROM vehicles) as v
         ");
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return round((float)($result['avg_freq'] ?? 0), 2);

@@ -7,86 +7,47 @@
   <title>Dashboard Administrateur - Flottee</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
-
-    .sidebar {
-      background-color: #343a40;
-      color: white;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 250px;
-      padding-top: 20px;
-    }
-
-    .sidebar a {
-      color: #adb5bd;
-      text-decoration: none;
-      display: block;
-      padding: 10px 20px;
-    }
-
-    .sidebar a:hover,
-    .sidebar a.active {
-      color: white;
-      background-color: #495057;
-    }
-
-    .main-content {
-      margin-left: 250px;
-      padding: 20px;
-    }
-
-    .stat-card {
-      border: none;
-      border-radius: 0.5rem;
-      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-      color: white;
-    }
-
-    .stat-card .card-body {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .stat-card i {
-      font-size: 3rem;
-      opacity: 0.5;
-    }
-
-    .bg-c-blue {
-      background: linear-gradient(45deg, #4099ff, #73b4ff);
-    }
-
-    .bg-c-green {
-      background: linear-gradient(45deg, #2ed8b6, #59e0c5);
-    }
-
-    .bg-c-yellow {
-      background: linear-gradient(45deg, #FFB64D, #ffcb80);
-    }
-
-    .bg-c-pink {
-      background: linear-gradient(45deg, #FF5370, #ff869a);
-    }
-  </style>
+  <link rel="stylesheet" href="/assets/css/dashboard.css">
 </head>
 
 <body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <div class="container-fluid">
+      <!-- Toggle button for mobile -->
+      <button class="btn btn-outline-secondary d-lg-none" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <a class="navbar-brand ms-2" href="#">
+        <img src="/assets/img/logo/logo-flottee.png" alt="Flottee Logo">
+      </a>
+
+      <div class="ms-auto d-flex align-items-center">
+        <span id="welcome-message" class="navbar-text me-3 d-none d-sm-block"></span>
+        <button class="btn btn-outline-secondary me-2" id="theme-toggle" title="Changer de thème">
+          <i class="fas fa-moon"></i>
+        </button>
+        <div class="dropdown">
+          <button class="btn btn-outline-primary" type="button" id="profileMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileMenuButton">
+            <li><a class="dropdown-item" href="#">Mon Profil</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="#" id="logout-link-navbar">Déconnexion</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
 
   <div class="sidebar">
-    <h4 class="text-center">Flottee Admin</h4>
-    <hr class="bg-light">
-    <a href="#" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+    <a href="/admin_dashboard.php" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
     <a href="#"><i class="fas fa-car me-2"></i>Véhicules</a>
-    <a href="#"><i class="fas fa-users me-2"></i>Utilisateurs</a>
+    <a href="/admin/users_management.php"><i class="fas fa-users me-2"></i>Utilisateurs</a>
     <a href="#"><i class="fas fa-tools me-2"></i>Maintenance</a>
-    <a href="#" id="logout-btn" class="mt-auto"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a>
   </div>
 
   <main class="main-content">
@@ -135,6 +96,9 @@
         return;
       }
 
+      let usageChart = null;
+      let chartData = {};
+
       fetch('/admin/dashboard', {
           method: 'GET',
           headers: {
@@ -153,7 +117,12 @@
         .then(data => {
           if (data && data.stats) {
             displayStats(data.stats);
-            createUsageChart(data.stats.top_used_vehicles, data.stats.top_users);
+            chartData.topVehicles = data.stats.top_used_vehicles;
+            chartData.topUsers = data.stats.top_users;
+            createUsageChart();
+            if (data.user && data.user.first_name) {
+              document.getElementById('welcome-message').textContent = `Bienvenue, ${data.user.first_name}`;
+            }
           }
         })
         .catch(error => {
@@ -205,16 +174,27 @@
         tableBody.innerHTML = tableHtml;
       }
 
-      function createUsageChart(topVehicles, topUsers) {
+      function createUsageChart() {
+        if (usageChart) {
+          usageChart.destroy();
+        }
+
+        if (!chartData.topVehicles || !chartData.topUsers) {
+          return;
+        }
+
         const ctx = document.getElementById('usageChart').getContext('2d');
+        const isDarkMode = document.body.classList.contains('dark-theme');
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const textColor = isDarkMode ? '#e0e0e0' : '#000';
 
-        const vehicleLabels = topVehicles.map(v => `${v.make} ${v.model}`);
-        const vehicleData = topVehicles.map(v => v.total_usage_days);
+        const vehicleLabels = chartData.topVehicles.map(v => `${v.make} ${v.model}`);
+        const vehicleData = chartData.topVehicles.map(v => v.total_usage_days);
 
-        const userLabels = topUsers.map(u => `${u.first_name} ${u.last_name}`);
-        const userData = topUsers.map(u => u.total_usage_days);
+        const userLabels = chartData.topUsers.map(u => `${u.first_name} ${u.last_name}`);
+        const userData = chartData.topUsers.map(u => u.total_usage_days);
 
-        new Chart(ctx, {
+        usageChart = new Chart(ctx, {
           type: 'bar',
           data: {
             labels: ['Top 1', 'Top 2', 'Top 3', 'Top 4', 'Top 5'],
@@ -245,10 +225,29 @@
             maintainAspectRatio: false,
             scales: {
               y: {
-                beginAtZero: true
+                beginAtZero: true,
+                grid: {
+                  color: gridColor
+                },
+                ticks: {
+                  color: textColor
+                }
+              },
+              x: {
+                grid: {
+                  color: gridColor
+                },
+                ticks: {
+                  color: textColor
+                }
               }
             },
             plugins: {
+              legend: {
+                labels: {
+                  color: textColor
+                }
+              },
               tooltip: {
                 callbacks: {
                   label: function(context) {
@@ -270,7 +269,28 @@
         });
       }
 
-      document.getElementById('logout-btn').addEventListener('click', function(e) {
+      document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.querySelector('.sidebar').classList.toggle('show');
+      });
+
+      // Theme toggle
+      const themeToggle = document.getElementById('theme-toggle');
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDarkMode = document.body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        createUsageChart();
+      });
+
+      // Apply saved theme
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+      }
+
+      // Logout from navbar
+      document.getElementById('logout-link-navbar').addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.removeItem('jwt');
         window.location.href = '/login.php';

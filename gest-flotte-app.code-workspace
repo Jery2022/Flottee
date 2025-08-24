@@ -39,21 +39,7 @@
 				"name": "Flottee-connexion",
 				"database": "ejyr_flottee_prod",
 				"username": "ejyr_admin_flot",
-				"password": "Kevazingo01#"
-			},
-			{
-				"mysqlOptions": {
-					"authProtocol": "default",
-					"enableSsl": "Disabled"
-				},
-				"previewLimit": 50,
-				"server": "mysql-ejyr.alwaysdata.net",
-				"port": 3306,
-				"driver": "MySQL",
-				"name": "test",
-				"database": "ejyr_flottee_prod",
-				"username": "ejyr_admin_flot",
-				"password": "Kevazingo01#"
+				"password": "Kevazingo01"
 			}
 		]
 	}

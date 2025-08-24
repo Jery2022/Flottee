@@ -58,5 +58,6 @@ return function (Router $router) {
     // Groupe pour les routes d'administration
     $router->group('/admin', function ($r) {
         $r->add('GET', '/dashboard', 'DashboardController@index');
+        $r->add('GET', '/users', 'UsersController@index');
     });
 };

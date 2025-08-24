@@ -71,6 +71,15 @@ class AuthHelper
           return $user['user_id'] ?? null;
      }
 
+     public static function checkAdmin(): void
+     {
+          $user = self::getAuthenticatedUser();
+          if (!$user || $user['role'] !== 'admin') {
+               Response::error('Accès interdit. Vous devez être administrateur.', 403);
+               exit;
+          }
+     }
+
      // Méthodes privées
 
      private static function extractToken(): ?string
