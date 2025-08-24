@@ -208,6 +208,17 @@ class UsersController
         }
     }
 
+
+    public function findByName($name)
+    {
+        $user = $this->model->getByName($name);
+        if ($user) {
+            Response::success(json_encode($user));
+        } else {
+            Response::error('Utilisateur non trouvé', 404);
+        }
+    }
+
     public function restore($id)
     {
         $auth = AuthHelper::getAuthenticatedUser();

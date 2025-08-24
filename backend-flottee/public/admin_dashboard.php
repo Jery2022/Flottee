@@ -45,7 +45,7 @@
 
   <div class="sidebar">
     <a href="/admin_dashboard.php" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
-    <a href="#"><i class="fas fa-car me-2"></i>Véhicules</a>
+    <a href="/admin/vehicles_management.php"><i class="fas fa-car me-2"></i>Véhicules</a>
     <a href="/admin/users_management.php"><i class="fas fa-users me-2"></i>Utilisateurs</a>
     <a href="#"><i class="fas fa-tools me-2"></i>Maintenance</a>
   </div>

@@ -1,46 +1,78 @@
 <?php
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../config/db.php';
 
-function getAllVehicles() {
-    global $pdo;
-    return $pdo->query("SELECT * FROM vehicles")->fetchAll();
-}
+namespace App\Models;
 
-function getVehicleById($id) {
-    global $pdo;
-    $stmt = $pdo->prepare("SELECT * FROM vehicles WHERE id = ?");
-    $stmt->execute([$id]);
-    return $stmt->fetch();
-}
+use PDO;
 
-function createVehicle($data) {
-    global $pdo;
-    $stmt = $pdo->prepare("INSERT INTO vehicles (make, model, year, license_plate, status) VALUES (?, ?, ?, ?, ?)");
-    return $stmt->execute([
-        $data['make'], $data['model'], $data['year'],
-        $data['license_plate'], $data['status'] ?? 'disponible'
-    ]);
-}
+class vehiclesModel
+{
+    protected PDO $pdo;
 
-function updateVehicle($id, $data) {
-    global $pdo;
-    $fields = [];
-    $values = [];
-
-    foreach ($data as $key => $value) {
-        $fields[] = "$key = ?";
-        $values[] = $value;
+    public function __construct()
+    {
+        require_once __DIR__ . '/../../config/db.php';
+        $this->pdo = getPDO();
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    $values[] = $id;
-    $sql = "UPDATE vehicles SET " . implode(', ', $fields) . " WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute($values);
-}
+    public function getPaginated(array $filters = [], int $page = 1, int $perPage = 10): array
+    {
+        $offset = ($page - 1) * $perPage;
+        $sql = "SELECT * FROM vehicles";
+        $countSql = "SELECT COUNT(*) FROM vehicles";
+        $where = [];
+        $params = [];
 
-function deleteVehicle($id) {
-    global $pdo;
-    $stmt = $pdo->prepare("DELETE FROM vehicles WHERE id = ?");
-    return $stmt->execute([$id]);
+        if (!empty($filters['name'])) {
+            $where[] = "(LOWER(make) LIKE LOWER(:name) OR LOWER(model) LIKE LOWER(:name))";
+            $params[':name'] = '%' . $filters['name'] . '%';
+        }
+        if (!empty($filters['type'])) {
+            $where[] = "type = :type";
+            $params[':type'] = $filters['type'];
+        }
+        if (!empty($filters['status'])) {
+            $where[] = "status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        if (isset($filters['visibility'])) {
+            if ($filters['visibility'] === 'deleted') {
+                $where[] = "deleted_at IS NOT NULL";
+            } else {
+                $where[] = "deleted_at IS NULL";
+            }
+        } else {
+            $where[] = "deleted_at IS NULL";
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(' AND ', $where);
+            $countSql .= " WHERE " . implode(' AND ', $where);
+        }
+
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $sql .= " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        $vehicles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'vehicles' => $vehicles,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => (int) ceil($total / $perPage)
+        ];
+    }
 }

@@ -19,10 +19,13 @@ CREATE TABLE IF NOT EXISTS vehicles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     make VARCHAR(100) NOT NULL,
     model VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL DEFAULT 'Sedan',
     year INT NOT NULL,
     license_plate VARCHAR(50) NOT NULL UNIQUE,
     status ENUM('disponible', 'en utilisation', 'en maintenance') DEFAULT 'disponible',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE IF NOT EXISTS assignments (

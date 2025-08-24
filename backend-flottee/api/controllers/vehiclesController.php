@@ -1,22 +1,38 @@
 <?php
-require_once __DIR__ . '/../models/vehiclesModel.php';
 
-function handleGetVehicles($id = null) {
-    header('Content-Type: application/json');
-    echo json_encode($id ? getVehicleById($id) : getAllVehicles());
-}
+namespace App\Controllers;
 
-function handleCreateVehicle($data) {
-    header('Content-Type: application/json');
-    echo json_encode(['success' => createVehicle($data)]);
-}
+use Core\Response;
+use App\Models\vehiclesModel;
+use App\Helpers\AuthMiddleware;
 
-function handleUpdateVehicle($id, $data) {
-    header('Content-Type: application/json');
-    echo json_encode(['success' => updateVehicle($id, $data)]);
-}
+class vehiclesController
+{
+    protected vehiclesModel $model;
 
-function handleDeleteVehicle($id) {
-    header('Content-Type: application/json');
-    echo json_encode(['success' => deleteVehicle($id)]);
+    public function __construct()
+    {
+        $this->model = new vehiclesModel();
+    }
+
+    public function index()
+    {
+        AuthMiddleware::requireRole('admin');
+
+        $filters = [
+            'name' => $_GET['name'] ?? null,
+            'type' => $_GET['type'] ?? null,
+            'status' => $_GET['status'] ?? null,
+            'visibility' => $_GET['visibility'] ?? 'visible',
+        ];
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = isset($_GET['perPage']) ? (int)$_GET['perPage'] : 10;
+
+        $data = $this->model->getPaginated($filters, $page, $perPage);
+
+        Response::json(['status' => 'success', 'data' => $data]);
+    }
+
+    // Keep other methods like show, store, update, destroy as needed,
+    // adapting them from UsersController. For now, the index method is the priority.
 }

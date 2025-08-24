@@ -18,8 +18,67 @@ class UsersModel
     // Récupère les utilisateurs avec filtres et pagination
     public function getPaginated(array $filters = [], int $page = 1, int $perPage = 10): array
     {
-        $stmt = $this->pdo->query("SELECT * FROM users WHERE deleted_at IS NULL");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $offset = ($page - 1) * $perPage;
+        $sql = "SELECT * FROM users";
+        $countSql = "SELECT COUNT(*) FROM users";
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['name'])) {
+            $where[] = "(LOWER(first_name) LIKE LOWER(:name) OR LOWER(last_name) LIKE LOWER(:name))";
+            $params[':name'] = '%' . $filters['name'] . '%';
+        }
+        if (!empty($filters['role'])) {
+            $where[] = "role = :role";
+            $params[':role'] = $filters['role'];
+        }
+        if (!empty($filters['status'])) {
+            $where[] = "status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        if (isset($filters['visibility'])) {
+            if ($filters['visibility'] === 'deleted') {
+                $where[] = "deleted_at IS NOT NULL";
+            } else {
+                $where[] = "deleted_at IS NULL";
+            }
+        } else {
+            $where[] = "deleted_at IS NULL";
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(' AND ', $where);
+            $countSql .= " WHERE " . implode(' AND ', $where);
+        }
+
+        // Get total count for pagination
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        // Get paginated results
+        $sql .= " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+
+        // Bind filter params
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        // Bind pagination params
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'users' => $users,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => (int) ceil($total / $perPage)
+        ];
     }
 
     //  Récupère un utilisateur par ID s’il n’est pas supprimé
@@ -29,6 +88,17 @@ class UsersModel
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
+
+    public function getByName(string $name): ?array
+    {
+        $sql = "SELECT * FROM users WHERE LOWER(first_name) LIKE :name OR LOWER(last_name) LIKE :name";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'name' => '%' . strtolower($name) . '%'
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: null;
+    }
+
 
     //  Récupère un utilisateur par ID, y compris s’il est supprimé
     public function getByIdIncludingDeleted(int $id): ?array

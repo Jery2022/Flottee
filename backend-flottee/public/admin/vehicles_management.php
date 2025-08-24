@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Utilisateurs - Flottee</title>
+    <title>Gestion des Véhicules - Flottee</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/dashboard.css">
@@ -17,7 +17,7 @@
 
     <main class="main-content">
         <div class="container-fluid">
-            <h1 class="mb-4">Gestion des Utilisateurs</h1>
+            <h1 class="mb-4">Gestion des Véhicules</h1>
 
             <div class="card mb-4">
                 <div class="card-header">
@@ -26,20 +26,22 @@
                 <div class="card-body">
                     <form id="filter-form" class="row g-3">
                         <div class="col-md-3">
-                            <input type="text" id="name-filter" class="form-control" placeholder="Prénom ou Nom">
+                            <input type="text" id="name-filter" class="form-control" placeholder="Marque ou Modèle">
                         </div>
                         <div class="col-md-2">
-                            <select id="role-filter" class="form-select">
-                                <option value="">Tous les rôles</option>
-                                <option value="admin">Admin</option>
-                                <option value="user">Utilisateur</option>
+                            <select id="type-filter" class="form-select">
+                                <option value="">Tous les types</option>
+                                <option value="sedan">Sedan</option>
+                                <option value="suv">SUV</option>
+                                <option value="truck">Camion</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <select id="status-filter" class="form-select">
                                 <option value="">Tous les statuts</option>
-                                <option value="active">Actif</option>
-                                <option value="inactive">Inactif</option>
+                                <option value="disponible">Disponible</option>
+                                <option value="en utilisation">En utilisation</option>
+                                <option value="en maintenance">En maintenance</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -58,28 +60,29 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Liste des utilisateurs</span>
-                    <button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Ajouter un utilisateur</button>
+                    <span>Liste des véhicules</span>
+                    <button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Ajouter un véhicule</button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Prénom</th>
-                                    <th>Nom</th>
-                                    <th>Email</th>
-                                    <th>Rôle</th>
+                                    <th>Marque</th>
+                                    <th>Modèle</th>
+                                    <th>Immatriculation</th>
+                                    <th>Type</th>
+                                    <th>Année</th>
                                     <th>Statut</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="users-table-body">
-                                <!-- Les utilisateurs seront chargés ici par JavaScript -->
+                            <tbody id="vehicles-table-body">
+                                <!-- Les véhicules seront chargés ici par JavaScript -->
                             </tbody>
                         </table>
                     </div>
-                    <nav id="pagination-container" aria-label="Pagination des utilisateurs">
+                    <nav id="pagination-container" aria-label="Pagination des véhicules">
                         <!-- La pagination sera générée ici -->
                     </nav>
                 </div>
@@ -89,7 +92,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Logique pour charger le dashboard, puis les utilisateurs
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('jwt');
             if (!token) {
@@ -97,20 +99,17 @@
                 return;
             }
 
-            // Charger le template du dashboard
             fetch('/admin_dashboard.php')
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
 
-                    // Injecter la navbar et la sidebar
                     const navbar = doc.querySelector('.navbar');
                     const sidebar = doc.querySelector('.sidebar');
                     document.querySelector('#main-container').prepend(sidebar);
                     document.querySelector('#main-container').prepend(navbar);
 
-                    // Exécuter les scripts du dashboard pour la navbar, sidebar, etc.
                     const scripts = doc.querySelectorAll('script');
                     scripts.forEach(script => {
                         if (script.src) {
@@ -123,47 +122,45 @@
                     });
                 })
                 .then(() => {
-                    // Mettre à jour le lien actif dans la sidebar
                     const sidebarLinks = document.querySelectorAll('.sidebar a');
                     sidebarLinks.forEach(link => {
                         link.classList.remove('active');
                     });
-                    const usersLink = document.querySelector('.sidebar a[href="/admin/users_management.php"]');
-                    if (usersLink) {
-                        usersLink.classList.add('active');
+                    const vehiclesLink = document.querySelector('.sidebar a[href="/admin/vehicles_management.php"]');
+                    if (vehiclesLink) {
+                        vehiclesLink.classList.add('active');
                     }
 
-                    // Maintenant que le dashboard est chargé, charger les utilisateurs
-                    fetchUsers(1);
+                    fetchVehicles(1);
 
                     document.getElementById('filter-form').addEventListener('submit', function(e) {
                         e.preventDefault();
-                        fetchUsers(1);
+                        fetchVehicles(1);
                     });
 
                     document.getElementById('filter-form').addEventListener('reset', function() {
-                        setTimeout(() => fetchUsers(1), 0);
+                        setTimeout(() => fetchVehicles(1), 0);
                     });
                 });
 
-            function fetchUsers(page = 1) {
-                const tableBody = document.getElementById('users-table-body');
+            function fetchVehicles(page = 1) {
+                const tableBody = document.getElementById('vehicles-table-body');
                 const name = document.getElementById('name-filter').value;
-                const role = document.getElementById('role-filter').value;
+                const type = document.getElementById('type-filter').value;
                 const status = document.getElementById('status-filter').value;
                 const visibility = document.getElementById('visibility-filter').value;
 
                 const params = new URLSearchParams({
                     page,
                     name,
-                    role,
+                    type,
                     status,
                     visibility
                 });
 
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Chargement...</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Chargement...</td></tr>';
 
-                fetch(`/admin/users?${params.toString()}`, {
+                fetch(`/admin/vehicles?${params.toString()}`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -173,35 +170,36 @@
                     .then(response => response.json())
                     .then(response => {
                         if (response.status === 'success' && response.data) {
-                            renderUsers(response.data.users);
+                            renderVehicles(response.data.vehicles);
                             renderPagination(response.data);
                         } else {
-                            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${response.message || 'Erreur lors de la récupération des utilisateurs.'}</td></tr>`;
+                            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${response.message || 'Erreur lors de la récupération des véhicules.'}</td></tr>`;
                         }
                     })
                     .catch(error => {
                         console.error('Erreur:', error);
-                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Impossible de charger les utilisateurs.</td></tr>`;
+                        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Impossible de charger les véhicules.</td></tr>`;
                     });
             }
 
-            function renderUsers(users) {
-                const tableBody = document.getElementById('users-table-body');
+            function renderVehicles(vehicles) {
+                const tableBody = document.getElementById('vehicles-table-body');
                 tableBody.innerHTML = '';
 
-                if (users.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Aucun utilisateur trouvé.</td></tr>';
+                if (vehicles.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Aucun véhicule trouvé.</td></tr>';
                     return;
                 }
 
-                users.forEach(user => {
+                vehicles.forEach(vehicle => {
                     const row = `
                         <tr>
-                            <td>${user.first_name}</td>
-                            <td>${user.last_name}</td>
-                            <td>${user.email}</td>
-                            <td>${user.role}</td>
-                            <td>${user.status}</td>
+                            <td>${vehicle.make}</td>
+                            <td>${vehicle.model}</td>
+                            <td>${vehicle.license_plate}</td>
+                            <td>${vehicle.type}</td>
+                            <td>${vehicle.year}</td>
+                            <td>${vehicle.status}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" title="Modifier"><i class="fas fa-edit"></i></button>
                                 <button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
@@ -224,27 +222,23 @@
 
                 let paginationHtml = '<ul class="pagination justify-content-center">';
 
-                // Previous button
                 paginationHtml += `<li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page - 1}">Précédent</a></li>`;
 
-                // Page numbers
                 for (let i = 1; i <= totalPages; i++) {
                     paginationHtml += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
                 }
 
-                // Next button
                 paginationHtml += `<li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page + 1}">Suivant</a></li>`;
 
                 paginationHtml += '</ul>';
                 paginationContainer.innerHTML = paginationHtml;
 
-                // Add event listeners
                 paginationContainer.querySelectorAll('.page-link').forEach(link => {
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
                         const newPage = parseInt(this.dataset.page);
                         if (newPage) {
-                            fetchUsers(newPage);
+                            fetchVehicles(newPage);
                         }
                     });
                 });

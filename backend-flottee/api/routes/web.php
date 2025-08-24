@@ -59,5 +59,7 @@ return function (Router $router) {
     $router->group('/admin', function ($r) {
         $r->add('GET', '/dashboard', 'DashboardController@index');
         $r->add('GET', '/users', 'UsersController@index');
+        $r->add('GET', '/users/{name}', 'UsersController@findByName');
+        $r->add('GET', '/vehicles', 'VehiclesController@index');
     });
 };
