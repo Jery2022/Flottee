@@ -47,7 +47,8 @@
     <a href="/admin_dashboard.php" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
     <a href="/admin/vehicles_management.php"><i class="fas fa-car me-2"></i>Véhicules</a>
     <a href="/admin/users_management.php"><i class="fas fa-users me-2"></i>Utilisateurs</a>
-    <a href="#"><i class="fas fa-tools me-2"></i>Maintenance</a>
+    <a href="/admin/reservations_management.php"><i class="fas fa-calendar-alt me-2"></i>Réservations</a>
+    <a href="/admin/maintenances_management.php"><i class="fas fa-tools me-2"></i>Maintenance</a>
   </div>
 
   <main class="main-content">
@@ -174,6 +175,36 @@
         tableBody.innerHTML = tableHtml;
       }
 
+      function initializeTheme() {
+        const themeToggle = document.getElementById('theme-toggle');
+        if (!themeToggle) return;
+
+        const applyTheme = (theme) => {
+          if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+          } else {
+            document.body.classList.remove('dark-theme');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+          }
+          if (typeof createUsageChart === 'function') {
+            createUsageChart();
+          }
+        };
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+
+        // Remove existing listeners to avoid duplicates
+        themeToggle.replaceWith(themeToggle.cloneNode(true));
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+          const isDarkMode = document.body.classList.toggle('dark-theme');
+          const newTheme = isDarkMode ? 'dark' : 'light';
+          localStorage.setItem('theme', newTheme);
+          applyTheme(newTheme);
+        });
+      }
+
       function createUsageChart() {
         if (usageChart) {
           usageChart.destroy();
@@ -273,21 +304,7 @@
         document.querySelector('.sidebar').classList.toggle('show');
       });
 
-      // Theme toggle
-      const themeToggle = document.getElementById('theme-toggle');
-      themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-theme');
-        const isDarkMode = document.body.classList.contains('dark-theme');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        createUsageChart();
-      });
-
-      // Apply saved theme
-      if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-theme');
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-      }
+      initializeTheme();
 
       // Logout from navbar
       document.getElementById('logout-link-navbar').addEventListener('click', function(e) {

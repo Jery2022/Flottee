@@ -4,7 +4,7 @@ namespace App\Models;
 
 use PDO;
 
-class vehiclesModel
+class VehiclesModel
 {
     protected PDO $pdo;
 
@@ -13,6 +13,14 @@ class vehiclesModel
         require_once __DIR__ . '/../../config/db.php';
         $this->pdo = getPDO();
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
+    public function getAll(): array
+    {
+        $sql = "SELECT * FROM vehicles WHERE deleted_at IS NULL ORDER BY make, model";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPaginated(array $filters = [], int $page = 1, int $perPage = 10): array
@@ -24,8 +32,8 @@ class vehiclesModel
         $params = [];
 
         if (!empty($filters['name'])) {
-            $where[] = "(LOWER(make) LIKE LOWER(:name) OR LOWER(model) LIKE LOWER(:name))";
-            $params[':name'] = '%' . $filters['name'] . '%';
+            $where[] = "(LOWER(make) LIKE :name OR LOWER(model) LIKE :name)";
+            $params[':name'] = '%' . strtolower($filters['name']) . '%';
         }
         if (!empty($filters['type'])) {
             $where[] = "type = :type";
@@ -54,17 +62,12 @@ class vehiclesModel
         $countStmt->execute($params);
         $total = (int) $countStmt->fetchColumn();
 
-        $sql .= " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        // Pour éviter les problèmes de binding avec LIMIT et OFFSET, on les injecte en tant qu'entiers.
+        $sql .= " ORDER BY id DESC LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
         $stmt = $this->pdo->prepare($sql);
 
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
-        $stmt->execute();
+        // On exécute la requête avec les paramètres de filtres
+        $stmt->execute($params);
         $vehicles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [

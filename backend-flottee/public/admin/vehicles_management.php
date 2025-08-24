@@ -158,7 +158,7 @@
                     visibility
                 });
 
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Chargement...</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Chargement...</td></tr>';
 
                 fetch(`/admin/vehicles?${params.toString()}`, {
                         method: 'GET',
@@ -173,12 +173,13 @@
                             renderVehicles(response.data.vehicles);
                             renderPagination(response.data);
                         } else {
-                            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${response.message || 'Erreur lors de la récupération des véhicules.'}</td></tr>`;
+                            const errorMessage = response.error ? `${response.message} <br><small>${response.error}</small>` : response.message || 'Erreur lors de la récupération des véhicules.';
+                            tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${errorMessage}</td></tr>`;
                         }
                     })
                     .catch(error => {
                         console.error('Erreur:', error);
-                        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Impossible de charger les véhicules.</td></tr>`;
+                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Impossible de charger les véhicules.</td></tr>`;
                     });
             }
 
@@ -187,7 +188,7 @@
                 tableBody.innerHTML = '';
 
                 if (vehicles.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Aucun véhicule trouvé.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Aucun véhicule trouvé.</td></tr>';
                     return;
                 }
 

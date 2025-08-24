@@ -1,76 +1,94 @@
 <?php
-require_once '../models/reservationModel.php';
 
-function handleCreateReservation($pdo, $user_id, $data) {
-    if (!isset($data['vehicle_id'], $data['start_date'], $data['end_date'])) {
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Champs manquants"]);
-        return;
+namespace App\Controllers;
+
+use Core\Response;
+use App\Models\ReservationModel;
+use App\Helpers\AuthMiddleware;
+
+class reservationController
+{
+    protected ReservationModel $model;
+
+    public function __construct()
+    {
+        $this->model = new ReservationModel();
     }
 
-    $success = insertReservation(
-        $pdo,
-        $user_id,
-        $data['vehicle_id'],
-        $data['start_date'],
-        $data['end_date']
-    );
+    public function index()
+    {
+        AuthMiddleware::requireRole('admin');
 
-    if ($success) {
-        http_response_code(201);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Réservation enregistrée"]);
-    } else {
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Erreur lors de l'enregistrement"]);
+        $filters = [
+            'vehicle' => $_GET['vehicle'] ?? null,
+            'user' => $_GET['user'] ?? null,
+            'status' => $_GET['status'] ?? null,
+        ];
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = isset($_GET['perPage']) ? (int)$_GET['perPage'] : 10;
+
+        $data = $this->model->getPaginated($filters, $page, $perPage);
+
+        Response::json(['status' => 'success', 'data' => $data]);
+    }
+
+    public function show($id)
+    {
+        // Implementation for showing a single reservation
+    }
+
+    public function store()
+    {
+        AuthMiddleware::requireRole('admin');
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($data['vehicle_id'], $data['user_id'], $data['start_date'], $data['end_date'], $data['status'])) {
+            Response::error('Données manquantes', 400);
+            return;
+        }
+
+        $newReservationId = $this->model->create($data);
+
+        if ($newReservationId) {
+            $newReservation = $this->model->getById($newReservationId);
+            Response::json(['status' => 'success', 'data' => $newReservation]);
+        } else {
+            Response::error('Échec de la création de la réservation', 500);
+        }
+    }
+
+    public function update($id)
+    {
+        AuthMiddleware::requireRole('admin');
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($data['vehicle_id'], $data['user_id'], $data['start_date'], $data['end_date'], $data['status'])) {
+            Response::error('Données manquantes', 400);
+            return;
+        }
+
+        $success = $this->model->update($id, $data);
+
+        if ($success) {
+            $updatedReservation = $this->model->getById($id);
+            Response::json(['status' => 'success', 'data' => $updatedReservation]);
+        } else {
+            Response::error('Échec de la mise à jour', 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        AuthMiddleware::requireRole('admin');
+
+        $success = $this->model->delete($id);
+
+        if ($success) {
+            Response::json(['status' => 'success', 'message' => 'Réservation supprimée avec succès']);
+        } else {
+            Response::error('Échec de la suppression', 500);
+        }
     }
 }
-
-function handleGetReservations($pdo, $user_id) {
-    $reservations = getReservations($pdo, $user_id);
-    http_response_code(200);
-    header('Content-Type: application/json');
-    echo json_encode($reservations);
-}
-
-function handleUpdateReservation($pdo, $reservation_id, $data) {
-    if (!isset($data['start_date'], $data['end_date'])) {
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Champs manquants"]);
-        return;
-    }
-
-    $success = updateReservation(
-        $pdo,
-        $reservation_id,
-        $data['start_date'],
-        $data['end_date']
-    );
-
-    if ($success) {
-        http_response_code(200);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Réservation mise à jour"]);
-    } else {
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Erreur lors de la mise à jour"]);
-    }
-}
-
-function handleDeleteReservation($pdo, $reservation_id) {
-    $success = deleteReservation($pdo, $reservation_id);
-    if ($success) {
-        http_response_code(204);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Réservation supprimée"]);
-    } else {
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode(["message" => "Erreur lors de la suppression"]);
-    }
-}
-

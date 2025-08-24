@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS assignments (
 CREATE TABLE IF NOT EXISTS maintenance_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     vehicle_id INT NOT NULL,
+    type ENUM('électrique', 'mécanique', 'pneumatique', 'carrosserie', 'entretien courant') NOT NULL DEFAULT 'entretien courant',
+    status ENUM('planifiée', 'en cours', 'terminée', 'annulée') NOT NULL DEFAULT 'planifiée',
+    severity ENUM('mineure', 'modérée', 'critique') NOT NULL DEFAULT 'mineure',
     description TEXT NOT NULL,
     date DATE NOT NULL,
     cost DECIMAL(10, 2) NOT NULL,
@@ -58,6 +61,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     vehicle_id INT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE,
+    status ENUM('confirmée', 'en attente','annulée') NOT NULL DEFAULT 'confirmée',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -116,18 +120,18 @@ VALUES
 
 -- jeu de données d'exemple pour la table maintenance_records
 
-INSERT INTO maintenance_records (vehicle_id, description, date, cost)
+INSERT INTO maintenance_records (vehicle_id, type, status, severity, description, date, cost)
 VALUES
-(3, 'Changement de pneus', '2025-07-28', 250.00),
-(7, 'Révision moteur', '2025-07-20', 480.00),
-(3, 'Vidange et filtres', '2025-08-01', 120.00),
-(7, 'Remplacement batterie', '2025-08-03', 180.00),
-(2, 'Contrôle technique', '2025-07-30', 90.00),
-(6, 'Réparation climatisation', '2025-08-04', 300.00),
-(10, 'Remplacement freins', '2025-08-05', 220.00),
-(5, 'Révision générale', '2025-08-06', 400.00),
-(1, 'Diagnostic électronique', '2025-08-07', 150.00),
-(9, 'Nettoyage intérieur', '2025-08-08', 60.00);
+(3, 'pneumatique', 'terminée', 'mineure', 'Changement de pneus', '2025-07-28', 250.00),
+(7, 'mécanique', 'en cours', 'critique', 'Révision moteur', '2025-07-20', 480.00),
+(3, 'entretien courant', 'planifiée', 'mineure', 'Vidange et filtres', '2025-08-01', 120.00),
+(7, 'électrique', 'terminée', 'modérée', 'Remplacement batterie', '2025-08-03', 180.00),
+(2, 'entretien courant', 'terminée', 'mineure', 'Contrôle technique', '2025-07-30', 90.00),
+(6, 'mécanique', 'annulée', 'modérée', 'Réparation climatisation', '2025-08-04', 300.00),
+(10, 'mécanique', 'planifiée', 'critique', 'Remplacement freins', '2025-08-05', 220.00),
+(5, 'entretien courant', 'en cours', 'modérée', 'Révision générale', '2025-08-06', 400.00),
+(1, 'électrique', 'planifiée', 'modérée', 'Diagnostic électronique', '2025-08-07', 150.00),
+(9, 'carrosserie', 'terminée', 'mineure', 'Nettoyage intérieur', '2025-08-08', 60.00);
 
 
 -- jeu de données d'exemple pour la table reservations

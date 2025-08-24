@@ -1,97 +1,155 @@
 <?php
 
-require_once __DIR__ . '/../functions/functions.php';
+namespace App\Models;
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-use Firebase\JWT\ExpiredException;
+use PDO;
 
-function insertReservation($pdo, $user_id, $vehicle_id, $start_date, $end_date) {
-    $sql = "INSERT INTO reservations (user_id, vehicle_id, start_date, end_date) VALUES (?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$user_id, $vehicle_id, $start_date, $end_date]);
-}
+class ReservationModel
+{
+    protected PDO $pdo;
 
-function getReservations($pdo, $user_id = null) {
-    if ($user_id) {
-        $sql = "SELECT * FROM reservations WHERE user_id = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$user_id]);
-    } else {
-        $sql = "SELECT * FROM reservations";
-        $stmt = $pdo->query($sql);
-    }
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-function updateReservation($pdo, $reservation_id, $start_date, $end_date) {
-    $sql = "UPDATE reservations SET start_date = ?, end_date = ? WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$start_date, $end_date, $reservation_id]);
-}
-
-function deleteReservation($pdo, $reservation_id) {
-    $sql = "DELETE FROM reservations WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$reservation_id]);
-}
-
-function getReservationsByUser($pdo, $user_id) {
-    $sql = "SELECT * FROM reservations WHERE user_id = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$user_id]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-function getReservationsByVehicle($pdo, $vehicle_id) {
-    $sql = "SELECT * FROM reservations WHERE vehicle_id = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$vehicle_id]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-function getUserIdFromToken() {
-    $jwt = getBearerToken();
-
-    if (!$jwt) {
-        return null;
-    }
-    
-    try {
-        $secretKey = $_ENV['JWT_SECRET_KEY'] ?: getenv('JWT_SECRET_KEY');
-        $decoded = JWT::decode($jwt, new Key($secretKey, 'HS256'));
-        return $decoded->data->user_id;
-    } catch (Exception $e) {
-        return null;
-    }
-}
-
-function getUserDataFromToken() {
-    $jwt = getBearerToken();
-
-    if (!$jwt) {
-        return null;
+    public function __construct()
+    {
+        require_once __DIR__ . '/../../config/db.php';
+        $this->pdo = getPDO();
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    try {
-        $secretKey = $_ENV['JWT_SECRET_KEY'] ?: getenv('JWT_SECRET_KEY');
-        $decoded = JWT::decode($jwt, new Key($secretKey, 'HS256'));
+    public function getPaginated(array $filters = [], int $page = 1, int $perPage = 10): array
+    {
+        $offset = ($page - 1) * $perPage;
 
-        // Vérification de l'expiration
-        if (isset($decoded->exp) && $decoded->exp < time()) {
-            return null; // Token expiré
+        $sql = "SELECT r.*, 
+                       v.make, v.model, v.license_plate,
+                       u.first_name, u.last_name
+                FROM reservations r
+                JOIN vehicles v ON r.vehicle_id = v.id
+                JOIN users u ON r.user_id = u.id";
+
+        $countSql = "SELECT COUNT(*) 
+                     FROM reservations r
+                     JOIN vehicles v ON r.vehicle_id = v.id
+                     JOIN users u ON r.user_id = u.id";
+
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['vehicle'])) {
+            $where[] = "(LOWER(v.make) LIKE :vehicle OR LOWER(v.model) LIKE :vehicle OR LOWER(v.license_plate) LIKE :vehicle)";
+            $params[':vehicle'] = '%' . strtolower($filters['vehicle']) . '%';
+        }
+        if (!empty($filters['user'])) {
+            $where[] = "(LOWER(u.first_name) LIKE :user OR LOWER(u.last_name) LIKE :user)";
+            $params[':user'] = '%' . strtolower($filters['user']) . '%';
+        }
+        if (!empty($filters['status'])) {
+            $where[] = "r.status = :status";
+            $params[':status'] = $filters['status'];
         }
 
-        // Extraction des données utiles
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(' AND ', $where);
+            $countSql .= " WHERE " . implode(' AND ', $where);
+        }
+
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $sql .= " ORDER BY r.start_date DESC LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Add formatted info strings for easier display on the frontend
+        foreach ($reservations as &$reservation) {
+            $reservation['vehicle_info'] = "{$reservation['make']} {$reservation['model']} ({$reservation['license_plate']})";
+            $reservation['user_info'] = "{$reservation['first_name']} {$reservation['last_name']}";
+        }
+
         return [
-            'user_id' => $decoded->data->user_id ?? null,
-            'role'    => $decoded->data->role ?? 'user', // rôle par défaut
+            'reservations' => $reservations,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => (int) ceil($total / $perPage)
         ];
-    } catch (ExpiredException $e) {
-        // Token expiré
-        return null;
-    } catch (Exception $e) {
-        // Token invalide ou autre erreur
-        return null;
+    }
+
+    public function getById(int $id): ?array
+    {
+        $sql = "SELECT r.*, 
+                       v.make, v.model, v.license_plate,
+                       u.first_name, u.last_name
+                FROM reservations r
+                JOIN vehicles v ON r.vehicle_id = v.id
+                JOIN users u ON r.user_id = u.id
+                WHERE r.id = ?";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$id]);
+        $reservation = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($reservation) {
+            $reservation['vehicle_info'] = "{$reservation['make']} {$reservation['model']} ({$reservation['license_plate']})";
+            $reservation['user_info'] = "{$reservation['first_name']} {$reservation['last_name']}";
+        }
+
+        return $reservation ?: null;
+    }
+
+    public function create(array $data): int
+    {
+        $sql = "INSERT INTO reservations (vehicle_id, user_id, start_date, end_date, status) 
+                VALUES (:vehicle_id, :user_id, :start_date, :end_date, :status)";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            ':vehicle_id' => $data['vehicle_id'],
+            ':user_id' => $data['user_id'],
+            ':start_date' => $data['start_date'],
+            ':end_date' => $data['end_date'],
+            ':status' => $data['status']
+        ]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        $sql = "UPDATE reservations 
+                SET vehicle_id = :vehicle_id, 
+                    user_id = :user_id, 
+                    start_date = :start_date, 
+                    end_date = :end_date, 
+                    status = :status 
+                WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute([
+            ':vehicle_id' => $data['vehicle_id'],
+            ':user_id' => $data['user_id'],
+            ':start_date' => $data['start_date'],
+            ':end_date' => $data['end_date'],
+            ':status' => $data['status'],
+            ':id' => $id
+        ]);
+    }
+
+    public function delete(int $id): bool
+    {
+        $sql = "DELETE FROM reservations WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$id]);
     }
 }

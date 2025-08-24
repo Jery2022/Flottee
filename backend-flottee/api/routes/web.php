@@ -33,6 +33,18 @@ return function (Router $router) {
         $r->add('POST', '/vehicles/{id}/reserve', 'VehiclesController@reserve');
         $r->add('GET', '/vehicles/{id}', 'VehiclesController@show');
 
+        // CRUD pour les maintenances
+        $r->resource('/maintenances', 'MaintenanceController');
+        $r->add('PUT', '/maintenances/{id}', 'MaintenanceController@update');
+        $r->add('DELETE', '/maintenances/{id}', 'MaintenanceController@delete');
+        $r->add('GET', '/maintenances/{id}', 'MaintenanceController@show');
+
+        // CRUD pour les réservations
+        $r->resource('/reservations', 'ReservationController');
+        $r->add('PUT', '/reservations/{id}', 'ReservationController@update');
+        $r->add('DELETE', '/reservations/{id}', 'ReservationController@delete');
+        $r->add('GET', '/reservations/{id}', 'ReservationController@show');
+
         // CRUD pour les articles
         $r->resource('/articles', 'ArticleController');
         $r->add('GET', '/articles/{slug}', 'ArticleController@read');
@@ -61,5 +73,6 @@ return function (Router $router) {
         $r->add('GET', '/users', 'UsersController@index');
         $r->add('GET', '/users/{name}', 'UsersController@findByName');
         $r->add('GET', '/vehicles', 'VehiclesController@index');
+        $r->add('GET', '/reservations', 'reservationController@index');
     });
 };
