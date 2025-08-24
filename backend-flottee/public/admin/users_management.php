@@ -32,6 +32,7 @@
                             <select id="role-filter" class="form-select">
                                 <option value="">Tous les rôles</option>
                                 <option value="admin">Admin</option>
+                                <option value="employe">Employé</option>
                                 <option value="user">Utilisateur</option>
                             </select>
                         </div>
@@ -88,6 +89,8 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/script.js">
+    </script>
     <script>
         // Logique pour charger le dashboard, puis les utilisateurs
         document.addEventListener('DOMContentLoaded', function() {
@@ -144,6 +147,10 @@
                     document.getElementById('filter-form').addEventListener('reset', function() {
                         setTimeout(() => fetchUsers(1), 0);
                     });
+                }).then(data => {
+                    if (data.user && data.user.first_name) {
+                        document.getElementById('welcome-message').textContent = `Bienvenue, ${data.user.first_name}`;
+                    }
                 });
 
             function fetchUsers(page = 1) {
@@ -249,6 +256,9 @@
                     });
                 });
             }
+            showToggle();
+            initializeTheme();
+            logoutAction();
         });
     </script>
 </body>
