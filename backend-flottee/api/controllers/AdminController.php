@@ -1,11 +1,13 @@
 <?php
-// Contrôleur pour afficher la page administration Amin ou Employé selon le rôle.
 
 namespace App\Controllers;
 
+use Core\Response;
+use App\Models\UsersModel;
+use App\Helpers\AuthMiddleware;
+
 class AdminController
 {
-    
     // Méthode pour afficher les pages de l'Administration
     public function show()
     {

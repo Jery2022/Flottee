@@ -30,45 +30,9 @@ if ($isApiRoute && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $router = new Router();
 
-$router->add('GET', '/', 'AccueilController@index'); // Affiche la page d'accueil, OK
-$router->add('GET', '/api/routes/test', 'TestController@status'); // Affiche la page de test, OK
-$router->add('GET', '/api/debug/jwt', 'jwtController@handle'); // Affiche la page de test du jwt, OK
-$router->add('GET', '/login', 'AdminController@show'); // Affiche la page de login, OK
+// Chargement des définitions de routes 
+$routes = require __DIR__ . '/../api/routes/web.php';
+$routes($router);
 
-$router->group('/api/routes', function ($r) {
-    $r->resource('/users', 'UsersController'); // CRUD pour les utilisateurs
-    $r->resource('/vehicles', 'VehiclesController'); // CRUD pour les véhicules
-    $r->resource('/articles', 'ArticleController'); // CRUD pour les articles(informations, notes, notifications)
-    $r->add('PUT', '/users/{id}', 'UsersController@update');
-    $r->add('DELETE', '/users/{id}', 'UsersController@delete');
-    $r->add('POST', '/users/{id}/password', 'UsersController@updatePassword');
-    $r->add('POST', '/users/{id}/restore', 'UsersController@restore');
-    $r->add('GET', '/users/{id}', 'UsersController@show');
-    $r->add('POST', '/user', 'UsersController@store');
-    $r->add('PUT', '/vehicles/{id}', 'VehiclesController@update');
-    $r->add('DELETE', '/vehicles/{id}', 'VehiclesController@delete');
-    $r->add('POST', '/vehicles/{id}/reserve', 'VehiclesController@reserve');
-    $r->add('GET', '/vehicles/{id}', 'VehiclesController@show');
-    $r->add('GET', '/articles/{slug}', 'ArticleController@read');
-    $r->add('GET', '/csrf-token', 'AuthController@getCsrfToken');
-});
-
-$router->group('/api/routes', function ($r) {
-    $r->add('POST', '/auth', 'AuthController@login'); // Authentifie l'utilisateur
-    $r->add('POST', '/auth/handleForm', 'AuthController@handleForm'); // Gère le formulaire de connexion
-    $r->add('POST', '/auth/logout', 'AuthController@logout'); // Déconnecte l'utilisateur
-    $r->add('POST', '/auth/register', 'AuthController@register');
-    $r->add('POST', '/auth/forgot-password', 'AuthController@forgotPassword');
-    $r->add('POST', '/auth/reset-password', 'AuthController@resetPassword');
-    $r->add('POST', '/auth/verify-email', 'AuthController@verifyEmail');
-    $r->add('POST', '/auth/resend-verification', 'AuthController@resendVerification');
-    $r->add('POST', '/auth/change-password', 'AuthController@changePassword');
-    $r->add('POST', '/auth/update-profile', 'AuthController@updateProfile');
-});
-
-$router->group('/admin', function ($r) {
-    $r->add('GET', '/dashboard', 'DashboardController@index');
-});
-
-
+// Lancer le routeur
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

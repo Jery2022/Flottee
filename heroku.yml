@@ -1,14 +1,6 @@
 # heroku.yml
 # Ce fichier décrit comment construire et déployer l'application sur Heroku.
 
-setup:
-  # Heroku propose des "add-ons" pour les services comme les bases de données.
-  # Nous allons ajouter la base de données via la ligne de commande,
-  # mais cette section pourrait être utilisée pour le déclarer.
-  addons:
-    - plan: cleardb:ignite
-      as: DATABASE
-
 build:
   # Nous indiquons à Heroku d'utiliser Docker pour construire notre application.
   docker:

@@ -2,6 +2,7 @@ node_modules/
 vendor/
 poubelle/
 notes_de_projet/
+Documentations/
 tests/
 generate_token.php
 jwt_diagnostic.php
@@ -9,6 +10,7 @@ hash_pwd.php
 start-app.bat
 logs/*.log
 .git/
+.env.local
 .env.prod 
 .env
 .DS_Store

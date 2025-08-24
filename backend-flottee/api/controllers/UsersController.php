@@ -6,6 +6,7 @@ namespace App\Controllers;
 use Core\Response;
 use App\Models\UsersModel;
 use App\Helpers\AuthHelper;
+use App\Helpers\AuthMiddleware;
 
 class UsersController
 {
@@ -18,8 +19,20 @@ class UsersController
 
     public function index()
     {
-        $users = $this->model->getAll();
-        Response::json($users);
+        AuthMiddleware::requireRole('admin');
+
+        $filters = [
+            'name' => $_GET['name'] ?? null,
+            'role' => $_GET['role'] ?? null,
+            'status' => $_GET['status'] ?? null,
+            'visibility' => $_GET['visibility'] ?? 'visible',
+        ];
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = isset($_GET['perPage']) ? (int)$_GET['perPage'] : 10;
+
+        $data = $this->model->getPaginated($filters, $page, $perPage);
+
+        Response::json(['status' => 'success', 'data' => $data]);
     }
 
     public function show($id)

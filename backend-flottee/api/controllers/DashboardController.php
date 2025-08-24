@@ -4,46 +4,47 @@ namespace App\Controllers;
 
 use Core\Response;
 use App\Helpers\JWTHelper;
+use App\Models\StatsModel;
 
 class DashboardController
 {
     public function index()
     {
-        session_start();
-
-        var_dump($_SESSION); // Pour débogage, à supprimer en production
-
+        // Le middleware s'occupe de la validation du token et du rôle.
         \App\Helpers\AuthMiddleware::requireRole('admin');
-        
-        if (!isset($_SESSION['jwt'])) {
-            Response::json(['error' => true, 'message' => 'Authentification requise'], 401);
-            exit;
-        }
 
-        $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? '';
-
-        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            Response::error('Token manquant', 401);
-        }
-
-        $token = $matches[1];
-        $jwtHelper = new JWTHelper();
+        // Si nous arrivons ici, l'utilisateur est authentifié et est un admin.
+        $user_data = \App\Helpers\JWTHelper::getUserDataFromJWT();
+        $user = [
+            'first_name' => $user_data['first_name'] ?? 'Admin'
+        ];
 
         try {
-            $payload = $jwtHelper->decodeJWT($token);
-            $data = $payload['data'] ?? [];
+            $statsModel = new StatsModel();
 
-            if ($data['role'] !== 'admin' || $data['status'] !== 'active') {
-                Response::error('Accès refusé', 403);
-            }
+            $stats = [
+                'vehicle_utilization_rate' => $statsModel->getVehicleUtilizationRate(),
+                'active_user_count' => $statsModel->getActiveUserCount(),
+                'average_mileage_per_vehicle' => $statsModel->getAverageMileagePerVehicle(),
+                'average_maintenance_frequency' => $statsModel->getAverageMaintenanceFrequency(),
+                'total_maintenance_cost_per_vehicle' => $statsModel->getTotalMaintenanceCostPerVehicle(),
+                'average_assignment_duration' => $statsModel->getAverageAssignmentDuration(),
+                'vehicles_in_maintenance_count' => $statsModel->getVehiclesInMaintenanceCount(),
+                'upcoming_maintenance_alerts' => $statsModel->getUpcomingMaintenanceAlerts(),
+                'top_used_vehicles' => $statsModel->getTopUsedVehicles(),
+                'top_users' => $statsModel->getTopUsers(),
+            ];
 
+            // Renvoyer une réponse de succès avec les statistiques
             Response::json([
-                'message' => 'Bienvenue dans le dashboard admin',
-                'user' => $data
+                'status' => 'success',
+                'message' => 'Statistiques du dashboard récupérées avec succès.',
+                'user' => $user,
+                'stats' => $stats
             ]);
         } catch (\Exception $e) {
-            Response::error('Token invalide', 401);
+            // Gérer les erreurs potentielles lors de la récupération des statistiques
+            Response::error("Erreur lors de la récupération des statistiques: " . $e->getMessage(), 500);
         }
     }
 }

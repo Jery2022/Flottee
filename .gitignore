@@ -1,0 +1,8 @@
+# Fichier d'environnement Docker
+.env
+
+# Données de la base de données locale
+db-data/
+
+# Fichiers système
+.DS_Store

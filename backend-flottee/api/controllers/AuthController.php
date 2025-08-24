@@ -22,55 +22,66 @@ class AuthController
             if (!verifyCsrfToken($csrf_token)) {
                 error_log("[" . date('Y-m-d H:i:s') . "] CSRF token invalide pour l'email: $email", 3, __DIR__ . '/../../logs/auth.log');
                 Response::error('Erreur de sécurité CSRF.', 403);
+                return;
             }
 
-            $userModel = new UsersModel();
-            $user = $userModel->getByEmail($email);
+            try {
+                $userModel = new UsersModel();
+                $user = $userModel->getByEmail($email);
 
-            if (!$user) {
-                error_log("[" . date('Y-m-d H:i:s') . "] Utilisateur non trouvé: $email", 3, __DIR__ . '/../../logs/auth.log');
-                Response::error('Utilisateur non trouvé.', 404);
-            }
-
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['status'] = $user['status'];
-
-                session_regenerate_id(true);
-
-                $jwtHelper = new JWTHelper();
-                $_SESSION['jwt'] = $jwtHelper->generateJWT([
-                    'id' => $user['id'],
-                    'email' => $user['email'],
-                    'role' => $user['role'],
-                    'status' => $user['status']
-                ]);
-
-                error_log("[" . date('Y-m-d H:i:s') . "] Connexion réussie pour l'utilisateur ID: {$user['id']} avec rôle: {$user['role']} et statut: {$user['status']}", 3, __DIR__ . '/../../logs/auth.log');
-
-                $redirect = '';
-                if ($user['role'] === 'admin' && $user['status'] === 'active') {
-                    $redirect = '/admin_dashboard.php';
-                } elseif ($user['role'] === 'employe' && $user['status'] === 'active') {
-                    $redirect = '/employe_dashboard.php';
-                } else {
-                    $redirect = '/login.php';
+                if (!$user) {
+                    error_log("[" . date('Y-m-d H:i:s') . "] Utilisateur non trouvé: $email", 3, __DIR__ . '/../../logs/auth.log');
+                    Response::error('Utilisateur non trouvé.', 404);
+                    return;
                 }
 
-                Response::json([
-                    'status' => 'success',
-                    'redirect' => $redirect,
-                    'user' => [
+                if (password_verify($password, $user['password'])) {
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['status'] = $user['status'];
+
+                    session_regenerate_id(true);
+
+                    $jwtHelper = new JWTHelper();
+                    $_SESSION['jwt'] = $jwtHelper->generateJWT([
                         'id' => $user['id'],
                         'email' => $user['email'],
                         'role' => $user['role'],
                         'status' => $user['status']
-                    ]
-                ]);
-            } else {
-                error_log("[" . date('Y-m-d H:i:s') . "] Mot de passe incorrect pour l'utilisateur: $email", 3, __DIR__ . '/../../logs/auth.log');
-                Response::error('Identifiants incorrects.', 401);
+                    ]);
+
+                    error_log("[" . date('Y-m-d H:i:s') . "] Connexion réussie pour l'utilisateur ID: {$user['id']} avec rôle: {$user['role']} et statut: {$user['status']}", 3, __DIR__ . '/../../logs/auth.log');
+
+                    $redirect = '';
+                    if ($user['role'] === 'admin' && $user['status'] === 'active') {
+                        $redirect = '/admin_dashboard.php';
+                    } elseif ($user['role'] === 'employe' && $user['status'] === 'active') {
+                        $redirect = '/employe_dashboard.php';
+                    } else {
+                        $redirect = '/login.php';
+                    }
+
+                    Response::json([
+                        'status' => 'success',
+                        'redirect' => $redirect,
+                        'token' => $_SESSION['jwt'], // Ajouter le token à la réponse
+                        'user' => [
+                            'id' => $user['id'],
+                            'email' => $user['email'],
+                            'role' => $user['role'],
+                            'status' => $user['status']
+                        ]
+                    ]);
+                } else {
+                    error_log("[" . date('Y-m-d H:i:s') . "] Mot de passe incorrect pour l'utilisateur: $email", 3, __DIR__ . '/../../logs/auth.log');
+                    Response::error('Identifiants incorrects.', 401);
+                }
+            } catch (\PDOException $e) {
+                error_log("Erreur de base de données dans AuthController: " . $e->getMessage(), 3, __DIR__ . '/../../logs/auth.log');
+                Response::error("Erreur de connexion au serveur. Veuillez réessayer plus tard.", 500);
+            } catch (\Exception $e) {
+                error_log("Erreur inattendue dans AuthController: " . $e->getMessage(), 3, __DIR__ . '/../../logs/auth.log');
+                Response::error("Une erreur inattendue est survenue.", 500);
             }
         } else {
             error_log("[" . date('Y-m-d H:i:s') . "] Méthode HTTP non autorisée: {$_SERVER['REQUEST_METHOD']} ", 3, __DIR__ . '/../../logs/auth.log');
