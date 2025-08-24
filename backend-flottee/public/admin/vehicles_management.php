@@ -91,6 +91,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('jwt');
@@ -110,29 +111,23 @@
                     document.querySelector('#main-container').prepend(sidebar);
                     document.querySelector('#main-container').prepend(navbar);
 
-                    const scripts = doc.querySelectorAll('script');
-                    scripts.forEach(script => {
-                        if (script.src) {
-                            const newScript = document.createElement('script');
-                            newScript.src = script.src;
-                            document.body.appendChild(newScript);
-                        } else {
-                            eval(script.innerText);
-                        }
-                    });
-                })
-                .then(() => {
+                    // Une fois le HTML injecté, on peut initialiser les fonctionnalités
+                    initializeTheme();
+                    showToggle();
+                    logoutAction();
+
+                    // Mettre à jour le lien actif dans la sidebar
                     const sidebarLinks = document.querySelectorAll('.sidebar a');
-                    sidebarLinks.forEach(link => {
-                        link.classList.remove('active');
-                    });
+                    sidebarLinks.forEach(link => link.classList.remove('active'));
                     const vehiclesLink = document.querySelector('.sidebar a[href="/admin/vehicles_management.php"]');
                     if (vehiclesLink) {
                         vehiclesLink.classList.add('active');
                     }
 
+                    // Charger les véhicules
                     fetchVehicles(1);
 
+                    // Ajouter les écouteurs pour le formulaire de filtre
                     document.getElementById('filter-form').addEventListener('submit', function(e) {
                         e.preventDefault();
                         fetchVehicles(1);
@@ -141,6 +136,25 @@
                     document.getElementById('filter-form').addEventListener('reset', function() {
                         setTimeout(() => fetchVehicles(1), 0);
                     });
+
+                    // Récupérer les informations de l'utilisateur pour le message de bienvenue
+                    return fetch('/admin/dashboard', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user && data.user.first_name) {
+                        const welcomeMessage = document.getElementById('welcome-message');
+                        if (welcomeMessage) {
+                            welcomeMessage.textContent = `Bienvenue, ${data.user.first_name}`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Erreur lors du chargement du dashboard ou des informations utilisateur:", error);
                 });
 
             function fetchVehicles(page = 1) {

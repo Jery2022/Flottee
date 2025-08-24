@@ -25,8 +25,9 @@ class UsersModel
         $params = [];
 
         if (!empty($filters['name'])) {
-            $where[] = "(LOWER(first_name) LIKE LOWER(:name) OR LOWER(last_name) LIKE LOWER(:name))";
-            $params[':name'] = '%' . $filters['name'] . '%';
+            $where[] = "(LOWER(first_name) LIKE LOWER(:first_name) OR LOWER(last_name) LIKE LOWER(:last_name))";
+            $params[':first_name'] = '%' . $filters['name'] . '%';
+            $params[':last_name'] = '%' . $filters['name'] . '%';
         }
         if (!empty($filters['role'])) {
             $where[] = "role = :role";

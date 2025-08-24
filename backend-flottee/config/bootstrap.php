@@ -8,6 +8,4 @@ $envPath = __DIR__ . '/../';
 if (file_exists($envPath . '.env')) {
     $dotenv = Dotenv::createImmutable($envPath);
     $dotenv->load();
-} else {
-    throw new RuntimeException('.env file not found in project root');
 }

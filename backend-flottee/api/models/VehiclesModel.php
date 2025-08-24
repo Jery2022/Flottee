@@ -32,8 +32,9 @@ class VehiclesModel
         $params = [];
 
         if (!empty($filters['name'])) {
-            $where[] = "(LOWER(make) LIKE :name OR LOWER(model) LIKE :name)";
-            $params[':name'] = '%' . strtolower($filters['name']) . '%';
+            $where[] = "(LOWER(make) LIKE :make_name OR LOWER(model) LIKE :model_name)";
+            $params[':make_name'] = '%' . strtolower($filters['name']) . '%';
+            $params[':model_name'] = '%' . strtolower($filters['name']) . '%';
         }
         if (!empty($filters['type'])) {
             $where[] = "type = :type";
