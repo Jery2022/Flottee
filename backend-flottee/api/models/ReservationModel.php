@@ -35,12 +35,15 @@ class ReservationModel
         $params = [];
 
         if (!empty($filters['vehicle'])) {
-            $where[] = "(LOWER(v.make) LIKE :vehicle OR LOWER(v.model) LIKE :vehicle OR LOWER(v.license_plate) LIKE :vehicle)";
-            $params[':vehicle'] = '%' . strtolower($filters['vehicle']) . '%';
+            $where[] = "(LOWER(v.make) LIKE :make OR LOWER(v.model) LIKE :model OR LOWER(v.license_plate) LIKE :plate)";
+            $params[':make'] = '%' . strtolower($filters['vehicle']) . '%';
+            $params[':model'] = '%' . strtolower($filters['vehicle']) . '%';
+            $params[':plate'] = '%' . strtolower($filters['vehicle']) . '%';
         }
         if (!empty($filters['user'])) {
-            $where[] = "(LOWER(u.first_name) LIKE :user OR LOWER(u.last_name) LIKE :user)";
-            $params[':user'] = '%' . strtolower($filters['user']) . '%';
+            $where[] = "(LOWER(u.first_name) LIKE :first_name OR LOWER(u.last_name) LIKE :last_name)";
+            $params[':first_name'] = '%' . strtolower($filters['user']) . '%';
+            $params[':last_name'] = '%' . strtolower($filters['user']) . '%';
         }
         if (!empty($filters['status'])) {
             $where[] = "r.status = :status";

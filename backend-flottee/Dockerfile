@@ -25,6 +25,8 @@ COPY composer.json composer.lock ./
 # --optimize-autoloader: Optimise l'autoloader pour la production
 RUN composer install --no-interaction --optimize-autoloader
 
+RUN mkdir -p /var/www/html/logs && chmod -R 777 /var/www/html/logs
+
 # Copier le reste des fichiers de l'application
 COPY . .
 
@@ -46,3 +48,4 @@ RUN chown -R www-data:www-data /var/www/html
 # le .htaccess dans le dossier public devrait suffire si bien configuré.
 
 # Le port 80 est déjà exposé par l'image de base php:8.2-apache
+

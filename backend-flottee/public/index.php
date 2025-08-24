@@ -13,7 +13,7 @@ if ($isApiRoute) {
 
     //Pour accepter plusieurs origines
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowed = ['http://localhost:3000', 'http://localhost:8000'];
+    $allowed = ['http://localhost:3000', 'http://localhost:8000', 'https://gest-flotte-app.fly.dev'];
     if (in_array($origin, $allowed)) {
         header("Access-Control-Allow-Origin: $origin");
     }
